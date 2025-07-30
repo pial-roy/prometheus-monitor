@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'northflank-app'
+    metrics_path: /metrics
+    scheme: https
+    static_configs:
+      - targets: ['pial-roy--devops--42qn9fvh4xdp.code.run']

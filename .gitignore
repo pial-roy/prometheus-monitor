@@ -1,0 +1,8 @@
+__pycache__/
+*.log
+*.tmp
+*.pid
+*.bak
+*.swp
+.DS_Store
+.env

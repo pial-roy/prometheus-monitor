@@ -1,0 +1,32 @@
+name: CI/CD - Build and Deploy to Northflank
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t pialroy5/prometheus-monitor:latest .
+
+      - name: Push Docker image
+        run: docker push pialroy5/prometheus-monitor:latest
+
+  deploy-northflank:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Northflank Deployment
+        run: |
+          curl -X POST https://api.northflank.com/v1/projects/YOUR_PROJECT_ID/services/YOUR_SERVICE_ID/deploy           -H "Authorization: Bearer ${{ secrets.TOKEN_GITHUB }}"           -H "Content-Type: application/json"           -d '{}'

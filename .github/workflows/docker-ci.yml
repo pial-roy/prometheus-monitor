@@ -3,7 +3,7 @@ name: Build & Push Prometheus image
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]   # tag releases like v1.0.0 to produce versioned images
+    tags: [ 'v*' ]
   workflow_dispatch:
 
 jobs:
@@ -17,12 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Validate your Prometheus config before building
       - name: Validate prometheus.yml with promtool
         run: |
           docker run --rm \
             -v "$PWD/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
-            prom/prometheus:latest \
+            prom/prometheus:v2.52.0 \
             promtool check config /etc/prometheus/prometheus.yml
 
       - name: Set up Buildx
@@ -34,10 +33,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Generate tags & labels automatically:
-      #  - latest on default branch
-      #  - sha tag on every push
-      #  - v* tag when pushing a git tag
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5

@@ -1,0 +1,48 @@
+name: Build & Push Prometheus Image
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Prometheus config
+        run: |
+          docker run --rm \
+            -v \${{ github.workspace }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+            --entrypoint=promtool \
+            prom/prometheus:v2.52.0 \
+            check config /etc/prometheus/prometheus.yml
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: \${{ secrets.DOCKER_USERNAME }}
+          password: \${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: \${{ secrets.DOCKER_USERNAME }}/prometheus-monitor
+          tags: |
+            type=raw,value=latest
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: \${{ steps.meta.outputs.tags }}
+          labels: \${{ steps.meta.outputs.labels }}
